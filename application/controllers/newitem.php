@@ -11,9 +11,7 @@ class Newitem extends CI_Controller
 
     public function index()
     {
-        // Mencegah user yang belum login untuk mengakses halaman ini
         $this->auth->restrict();
-        // Mencegah user mengakses menu yang tidak boleh ia buka, parameter merupakan nilai yang diijinkan
         $this->auth->cek_menu(2);
         $data['daftar_item'] = $this->item_model->select_all()->result();
         $this->menu->tampil_sidebar();
@@ -23,17 +21,15 @@ class Newitem extends CI_Controller
     // Pagination Table
     public function lihat_item_paging($offset = 0)
     {
-        // Tentukan jumlah data per halaman
         $perpage = 10;
-        // Load library pagination
         $this->load->library('pagination');
-        // Konfigurasi tampilan paging
+        
         $config = array(
             'base_url' => site_url('newitem/lihat_item_paging'),
             'total_rows' => count($this->item_model->select_all()->result()),
             'per_page' => $perpage,
         );
-        // Inisialisasi pagination dan config
+
         $this->pagination->initialize($config);
         $limit['perpage'] = $perpage;
         $limit['offset'] = $offset;
@@ -52,27 +48,21 @@ class Newitem extends CI_Controller
         $method = $this->input->post("method");
         $item = new stdClass();
 
+        $data['kd_model'] = $this->input->post('kd_model');
+        $data['nama_model'] = $this->input->post('nama_model');
+        $data['jml_produk'] = $this->input->post('jml_produk') ?? 0; // Default to 0 if not set
+        $data['deskripsi'] = $this->input->post('deskripsi');
+
         if ($method == 'create') {
-            $data['kd_model'] = $this->input->post('kd_model');
-            $data['nama_model'] = $this->input->post('nama_model');
-            $data['jml_produk'] = $this->input->post('jml_produk');
-            $data['deskripsi'] = $this->input->post('deskripsi');
             $kd_model = $this->item_model->insert_item($data);
             $data['kd_model'] = $kd_model;
-            $item = $data;
         } else {
-            $data['nama_model'] = $this->input->post('nama_model');
-            $data['jml_produk'] = $this->input->post('jml_produk');
-            $data['deskripsi'] = $this->input->post('deskripsi');
             $kd_model = $this->input->post('kd_model');
             $this->item_model->update_item($kd_model, $data);
             $data['kd_model'] = $kd_model;
-            $item = $data;
         }
 
-        echo json_encode([
-            'item' => $item
-        ]);
+        echo json_encode(['item' => $data]);
         exit(0);
     }
 
@@ -81,10 +71,9 @@ class Newitem extends CI_Controller
         if ($this->input->server("REQUEST_METHOD") == "POST") {
             $kd_model = $this->input->post("kode");
             $item = $this->item_model->select_by_id($kd_model)->row();
+
             http_response_code(200);
-            echo json_encode([
-                'item' => $item,
-            ]);
+            echo json_encode(['item' => $item]);
             exit(0);
         }
     }
@@ -98,9 +87,10 @@ class Newitem extends CI_Controller
     public function proses_edit_item()
     {
         $data['nama_model'] = $this->input->post('nama_model');
-        $data['jml_produk'] = $this->input->post('jml_produk');
+        $data['jml_produk'] = $this->input->post('jml_produk') ?? 0; // Default to 0 if not set
         $data['deskripsi'] = $this->input->post('deskripsi');
         $kd_model = $this->input->post('kd_model');
+
         $this->item_model->update_item($kd_model, $data);
         redirect(site_url('newitem'));
     }
@@ -111,7 +101,6 @@ class Newitem extends CI_Controller
         redirect(site_url('newitem'));
     }
 
-    // Proses untuk mencari item
     public function proses_cari_item()
     {
         $kd_model = $this->input->post('kd_model');
